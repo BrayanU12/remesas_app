@@ -1,44 +1,53 @@
 import streamlit as st
-import pandas as pd
-from utils import cargar_datos_json, guardar_datos_json
+import utils
+from datetime import datetime
 
-REMESAS_FILE = "remesas.json"
-
-def registrar_remesa():
-    st.title("Registrar nueva remesa")
-    monto = st.number_input("Monto a enviar", min_value=1.0)
-    moneda = st.selectbox("Moneda fiat de origen", ["COP", "USD", "EUR", "MXN"])
-    pais_origen = st.selectbox("Desde dónde envías", ["Colombia", "México", "USA", "España"])
-    pais_destino = st.selectbox("A dónde quieres enviar", ["Colombia", "México", "USA", "España"])
-
-    if st.button("Enviar remesa"):
-        remesas = cargar_datos_json(REMESAS_FILE)
-        if remesas.empty:
-            remesas = pd.DataFrame(columns=["usuario", "monto", "moneda", "origen", "destino", "estado", "id"])
-
-        nueva = pd.DataFrame([{
-            "usuario": st.session_state.usuario,
-            "monto": monto,
-            "moneda": moneda,
-            "origen": pais_origen,
-            "destino": pais_destino,
-            "estado": "Pendiente",
-            "id": len(remesas) + 1
-        }])
-        remesas = pd.concat([remesas, nueva], ignore_index=True)
-        guardar_datos_json(remesas, REMESAS_FILE)
-        st.success("Remesa registrada correctamente.")
 
 def mostrar_panel_usuario():
-    st.title(f"Panel de usuario: {st.session_state.usuario}")
+    st.header("Panel de Usuario")
     registrar_remesa()
-    remesas = cargar_datos_json(REMESAS_FILE)
-    if not remesas:
-        st.info("No hay remesas registradas.")
+    mostrar_historial_remesas()
+
+
+def registrar_remesa():
+    st.subheader("Registrar Nueva Remesa")
+
+    monto = st.number_input("Monto a enviar", min_value=0.0, format="%.2f")
+    pais_destino = st.selectbox("País de destino", ["Colombia", "México", "Perú", "Otro"])
+    destinatario = st.text_input("Nombre del destinatario")
+
+    if st.button("Enviar remesa"):
+        if monto > 0 and destinatario:
+            nueva_remesa = {
+                "usuario": st.session_state.usuario,
+                "monto": monto,
+                "pais_destino": pais_destino,
+                "destinatario": destinatario,
+                "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            lista_remesas = utils.cargar_datos_json("data/remesas.json")
+            lista_remesas.append(nueva_remesa)
+            utils.guardar_datos_json("data/remesas.json", lista_remesas)
+            st.success("Remesa registrada con éxito")
+        else:
+            st.warning("Por favor completa todos los campos correctamente.")
+
+
+def mostrar_historial_remesas():
+    st.subheader("Historial de Remesas")
+
+    lista_remesas = utils.cargar_datos_json("data/remesas.json")
+    remesas_usuario = [r for r in lista_remesas if r.get("usuario") == st.session_state.usuario]
+
+    if not remesas_usuario:
+        st.info("No hay remesas registradas aún.")
         return
-    remesas_usuario = remesas[remesas["usuario"] == st.session_state.usuario]
-    if remesas_usuario.empty:
-        st.info("Aún no tienes remesas registradas.")
-        return
-    st.write("Tus remesas:")
-    st.dataframe(remesas_usuario)
+
+    for remesa in remesas_usuario:
+        st.write(f"""
+        - **Fecha:** {remesa.get('fecha')}
+        - **Destinatario:** {remesa.get('destinatario')}
+        - **País:** {remesa.get('pais_destino')}
+        - **Monto:** ${remesa.get('monto'):.2f}
+        """)
+
