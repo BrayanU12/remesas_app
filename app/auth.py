@@ -1,51 +1,44 @@
 import streamlit as st
-import pandas as pd
+import os
+import json
 from utils import cargar_datos_json, guardar_datos_json
 
-USUARIOS_FILE = "usuarios.json"
+usuarios_file = "data/usuarios.json"
 
 def login():
-    st.title("Inicio de Sesión")
-    usuario = st.text_input("Usuario")
-    contrasena = st.text_input("Contraseña", type="password")
+    st.subheader("Iniciar Sesión")
+    username = st.text_input("Nombre de usuario")
+    password = st.text_input("Contraseña", type="password")
 
     if st.button("Iniciar sesión"):
-        usuarios = cargar_datos_json(USUARIOS_FILE)
-        if usuarios.empty or "usuario" not in usuarios.columns:
-            st.error("No hay usuarios registrados.")
-            return
+        usuarios = cargar_datos_json(usuarios_file)
+        usuario = next((u for u in usuarios if u["username"] == username), None)
 
-        user_data = usuarios[(usuarios["usuario"] == usuario) & (usuarios["contrasena"] == contrasena)]
-
-        if not user_data.empty:
-            st.session_state.usuario = usuario
-            st.session_state.rol = "admin" if usuario == "admin" else "usuario"
-            st.success(f"Bienvenido, {usuario}")
-            st.experimental_rerun()
+        if usuario and usuario["password"] == password:
+            st.session_state.usuario = usuario["username"]
+            st.session_state.rol = usuario["rol"]
+            st.success("Sesión iniciada. Usa el menú de la izquierda.")
         else:
-            st.error("Credenciales inválidas.")
+            st.error("Usuario o contraseña incorrectos")
 
 def registro_usuario():
-    st.title("Registro de Usuario")
-    usuario = st.text_input("Usuario")
-    correo = st.text_input("Correo")
-    contrasena = st.text_input("Contraseña", type="password")
+    st.subheader("Registrarse")
+    username = st.text_input("Elige un nombre de usuario")
+    password = st.text_input("Elige una contraseña", type="password")
+    rol = st.selectbox("Selecciona tu rol", ["usuario", "admin"])
 
     if st.button("Registrarse"):
-        usuarios = cargar_datos_json(USUARIOS_FILE)
-        if usuarios.empty:
-            usuarios = pd.DataFrame(columns=["usuario", "correo", "contrasena"])
+        usuarios = cargar_datos_json(usuarios_file)
 
-        if usuario in usuarios["usuario"].values:
-            st.error("Usuario ya registrado.")
-        else:
-            nuevo = pd.DataFrame([{
-                "usuario": usuario,
-                "correo": correo,
-                "contrasena": contrasena
-            }])
-            usuarios = pd.concat([usuarios, nuevo], ignore_index=True)
-            guardar_datos_json(usuarios, USUARIOS_FILE)
-            st.success("Usuario registrado con éxito. Ahora inicia sesión.")
-            st.experimental_rerun()
+        if any(u["username"] == username for u in usuarios):
+            st.error("El nombre de usuario ya existe")
+            return
 
+        nuevo_usuario = {
+            "username": username,
+            "password": password,
+            "rol": rol
+        }
+        usuarios.append(nuevo_usuario)
+        guardar_datos_json(usuarios_file, usuarios)
+        st.success("Usuario registrado. Ahora puedes iniciar sesión.")
