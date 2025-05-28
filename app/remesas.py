@@ -33,7 +33,7 @@ def mostrar_panel_usuario():
     st.title(f"Panel de usuario: {st.session_state.usuario}")
     registrar_remesa()
     remesas = cargar_datos_json(REMESAS_FILE)
-    if remesas.empty:
+    if not remesas:
         st.info("No hay remesas registradas.")
         return
     remesas_usuario = remesas[remesas["usuario"] == st.session_state.usuario]
