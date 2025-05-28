@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from app.utils import cargar_datos_json, guardar_datos_json
+from utils import cargar_datos_json, guardar_datos_json
 
 REMESAS_FILE = "remesas.json"
 
