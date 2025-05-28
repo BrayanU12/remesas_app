@@ -1,6 +1,9 @@
 
 import streamlit as st
-from app import auth, remesas, admin
+import auth
+import remesas
+import admin
+
 
 def main():
     st.sidebar.title("Navegación")
