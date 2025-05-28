@@ -5,6 +5,7 @@ import admin
 
 def main():
     st.sidebar.title("Navegación")
+
     if "usuario" not in st.session_state:
         menu = st.sidebar.selectbox("Menú", ["Iniciar sesión", "Registrarse"])
         if menu == "Iniciar sesión":
@@ -15,7 +16,8 @@ def main():
         st.sidebar.write(f"Usuario: {st.session_state.usuario}")
         if st.sidebar.button("Cerrar sesión"):
             st.session_state.clear()
-            st.experimental_rerun()
+            st.success("Sesión cerrada. Usa el menú para volver a iniciar sesión.")
+
         if st.session_state.rol == "admin":
             admin.mostrar_panel_admin()
         else:
