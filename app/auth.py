@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils import cargar_datos_json, guardar_datos_json
+from app.utils import cargar_datos_json, guardar_datos_json
 
 USUARIOS_FILE = "usuarios.json"
 
@@ -36,7 +36,7 @@ def registro_usuario():
         if usuarios.empty:
             usuarios = pd.DataFrame(columns=["usuario", "correo", "contrasena"])
 
-        if "usuario" in usuarios.columns and usuario in usuarios["usuario"].values:
+        if usuario in usuarios["usuario"].values:
             st.error("Usuario ya registrado.")
         else:
             nuevo = pd.DataFrame([{
@@ -48,3 +48,4 @@ def registro_usuario():
             guardar_datos_json(usuarios, USUARIOS_FILE)
             st.success("Usuario registrado con éxito. Ahora inicia sesión.")
             st.experimental_rerun()
+
